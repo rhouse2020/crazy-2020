@@ -1,0 +1,150 @@
+---
+title: "jupyter_test"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+library(tidyquant)
+library(patchwork)
+library(extrafont)
+
+
+```
+get the daily data
+```{r}
+
+url <- "http://www.vdh.virginia.gov/content/uploads/sites/182/2020/03/VDH-COVID-19-PublicUseDataset-Cases.csv"
+dest <- "C:/_workspace/covid19/va_daily.csv"
+
+download.file(url, dest)
+
+
+```
+fix Virginia
+```{r}
+data <- read_csv("va_daily.csv" ,
+                col_types = cols(`Report Date` = col_date(format = "%m/%d/%Y"),
+                                 'Total Cases' = col_integer(),
+                                 'Hospitalizations' = col_integer(),
+                                 'Deaths' = col_integer()))
+                
+
+data <- data %>% select(date=`Report Date`, Locality, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
+
+data
+```
+
+
+filter for Fairfax Health District then calculate new cases, new hospitalizations, and new deaths.
+
+Add fields to record sign of new cases differences and then add a column to calculate the streak of days with decreasing new cases.
+```{r}
+fairfax <- data %>% filter(district == 'Fairfax') %>% 
+  group_by(date, district) %>%
+  summarize(tot_cases = sum(cases), hosp=sum(Hospitalizations),dead=sum(Deaths)) %>% 
+  arrange(date) %>% 
+  ungroup() %>% 
+  group_by(district) %>%
+  select(date, district, tot_cases, hosp, dead) %>%
+  mutate(new_cases = tot_cases - lag(tot_cases,1),
+         new_hosp = hosp - lag(hosp,1),
+         new_dead = dead - lag(dead,1)) %>% 
+  # 1 means 0 or negative difference,  0 means positive difference
+  mutate(d_cases = if_else(sign(new_cases - lag(new_cases,1)) ==1,0,1,missing=0)) %>%
+  group_by(grp=cumsum(d_cases==0)) %>% 
+  mutate(streak = ifelse(d_cases==1, lag(cumsum(d_cases==1))+1,0))
+
+  
+
+fairfax
+
+```
+
+
+```{r}
+
+
+n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
+  geom_bar(stat="identity",fill="blue", alpha=0.5) +
+  geom_ma(ma_fun = SMA, n = 7, linetype="solid", color = "red", size=1) +
+  theme_minimal()+
+  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  labs(title="New Covid-19 Cases",
+         x=NULL, y=NULL) +
+  xlim(date("2020-03-17"), max(fairfax$date)+1)
+
+n
+
+a <- ggplot(fairfax, aes(x=date, y=streak)) + 
+  geom_bar(stat="identity", fill="red",alpha=0.5) +
+  ylim(0,15) +
+  theme_minimal()+
+  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  labs(title="Consecutive Days with Fewer New Covid-19 Cases",
+       x=NULL, y=NULL) +
+  xlim(date("2020-03-17"), max(fairfax$date)+1)
+a
+
+h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
+  geom_bar(stat="identity", fill = "purple", alpha = 0.5, na.rm=TRUE) +
+  theme_minimal()+
+  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  labs(title="New Covid-19 Hospitalizations",
+       subtitle = sprintf("Total Hospitalizations: %s", format(sum(fairfax$hosp),big.mark=",", scientific=FALSE)),
+       x=NULL, y=NULL) +
+  ylim(0, (max(fairfax$new_hosp)+10)) +
+  xlim(date("2020-03-17"), max(fairfax$date)+1)
+
+h
+
+d <- ggplot(fairfax, aes(x=date, y=new_dead)) +
+  geom_bar(stat="identity", fill = "brown", alpha = 0.5, na.rm=TRUE) +
+  theme_minimal()+
+  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  labs(title="New Covid-19 Deaths",
+       subtitle = sprintf("Total Deaths: %s", as.character(sum(fairfax$dead))),
+               x=NULL, y=NULL) +
+  ylim(0, (max(fairfax$new_dead)+10)) +
+  xlim(date("2020-03-17"), max(fairfax$date)+1)
+
+d
+
+
+
+
+```
+
+
+
+
+```{r fig.height=10}
+
+today <- max(fairfax$date)
+patchwork <- n / a / h/ d 
+
+final <- patchwork + 
+  plot_annotation(title="Daily Covid-19 Counts for Fairfax Health District*",
+                  subtitle = sprintf("As of %s %s %s",day(ds), month.abb[month(ds)],year(ds)),
+                  caption = "*Fairfax Health District includes Fairfax County, City of Fairfax, and City of Falls Church\nSource: VA Dept of Health",
+                  theme = theme(plot.title = element_text(size = 16))) &
+  theme(text = element_text(family='Verdana'),
+        plot.caption = element_text(face = 'italic')) 
+
+final
+```
+
+```{r}
+ggsave("covid_tom.png",width = 7.5)
+```
+
+
+
+
+
