@@ -1,7 +1,7 @@
 library(tidyverse)
 library(rstan)
 
-va_data <- read_csv("va_daily.csv" ,
+va_data <- read_csv(filename ,
                     col_types = cols(`Report Date` = col_date(format = "%m/%d/%Y"),
                                      'Total Cases' = col_integer(),
                                      'Hospitalizations' = col_integer(),
@@ -40,6 +40,10 @@ model_results <- extract(stan_fit)
 # since we did log(new_cases + 1), subtracting the 1 here
 trend <- apply(model_results$Y_sim_exp, 2, mean) - 1
 
+trend <- data.frame('date'=fairfax$date,'trend'=trend)
+
+write.csv(trend, 'trends/trend_0507.csv', row.names = FALSE)
+
 ggplot(fairfax, aes(x=date, y=new_cases)) + geom_point() + 
     labs(title='Daily change in # of Covid-19 cases for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
-    geom_line(aes(fairfax$date, y=trend), color='blue')
+    geom_line(aes(fairfax$date, y=trend$trend), color='blue')
