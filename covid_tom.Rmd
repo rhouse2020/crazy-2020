@@ -17,32 +17,35 @@ library(extrafont)
 
 
 ```
+
+
 get the daily data
 ```{r}
 
+
 url <- "http://www.vdh.virginia.gov/content/uploads/sites/182/2020/03/VDH-COVID-19-PublicUseDataset-Cases.csv"
-dest <- "C:/_workspace/covid19/va_daily.csv"
+dest <- paste(getwd(), "/data/va_daily.csv",sep="")
 
 download.file(url, dest)
 
 
 ```
-fix Virginia
+read data and select desired fields
 ```{r}
-data <- read_csv("va_daily.csv" ,
-                col_types = cols(`Report Date` = col_date(format = "%m/%d/%Y"),
+data <- read_csv("data/va_daily.csv" ,
+                col_types = cols('Report Date' = col_date(format = "%m/%d/%Y"),
                                  'Total Cases' = col_integer(),
                                  'Hospitalizations' = col_integer(),
                                  'Deaths' = col_integer()))
                 
 
-data <- data %>% select(date=`Report Date`, Locality, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
+data <- data %>% select(date=`Report Date`, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
 
 data
 ```
 
 
-filter for Fairfax Health District then calculate new cases, new hospitalizations, and new deaths.
+Filter for Fairfax Health District then calculate new cases, new hospitalizations, and new deaths.
 
 Add fields to record sign of new cases differences and then add a column to calculate the streak of days with decreasing new cases.
 ```{r}
@@ -68,71 +71,81 @@ fairfax
 ```
 
 
-```{r}
+Plot everything
+```{r fig.height=10, warning=FALSE}
 
-
+# plot new cases
 n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
-  geom_bar(stat="identity",fill="blue", alpha=0.5) +
+  geom_bar(stat="identity",fill="blue", alpha=0.75) +
   geom_ma(ma_fun = SMA, n = 7, linetype="solid", color = "red", size=1) +
+  geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_cases, label=new_cases),
+            position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme_minimal()+
-  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  theme(text = element_text(family='Verdana'),
+        plot.title = element_text(size = 12, face="bold"),
+        panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Cases",
-         x=NULL, y=NULL) +
+       subtitle = sprintf("Total Cases: %s", max(fairfax$tot_cases)),
+           x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
 
-n
-
+# plot case streak
 a <- ggplot(fairfax, aes(x=date, y=streak)) + 
-  geom_bar(stat="identity", fill="red",alpha=0.5) +
+  geom_bar(stat="identity", fill="red",alpha=0.75) +
+  geom_text(data=subset(fairfax, date ==max(date)), aes(y=streak, label=streak),
+            position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   ylim(0,15) +
   theme_minimal()+
-  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  theme(text = element_text(family='Verdana'),
+        plot.title = element_text(size = 12, face="bold"),
+        panel.grid.major = element_line(color="grey68")) +
   labs(title="Consecutive Days with Fewer New Covid-19 Cases",
        x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
-a
 
+# plot hospitalizations
 h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
-  geom_bar(stat="identity", fill = "purple", alpha = 0.5, na.rm=TRUE) +
+  geom_bar(stat="identity", fill = "purple", alpha=0.75, na.rm=TRUE) +
+  geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_hosp, label=new_hosp),
+            position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme_minimal()+
-  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  theme(text = element_text(family='Verdana'),
+        plot.title = element_text(size = 12, face="bold"),
+        panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Hospitalizations",
        subtitle = sprintf("Total Hospitalizations: %s", format(sum(fairfax$hosp),big.mark=",", scientific=FALSE)),
        x=NULL, y=NULL) +
   ylim(0, (max(fairfax$new_hosp)+10)) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
 
-h
 
+# plot deaths
 d <- ggplot(fairfax, aes(x=date, y=new_dead)) +
-  geom_bar(stat="identity", fill = "brown", alpha = 0.5, na.rm=TRUE) +
+  geom_bar(stat="identity", fill = "brown",alpha=0.75,  na.rm=TRUE) +
+  geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_dead, label=new_dead),
+            position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme_minimal()+
-  theme(text = element_text(family='Verdana'),plot.title = element_text(size = 12)) +
+  theme(text = element_text(family='Verdana'),
+        plot.title = element_text(size = 12, face="bold"),
+        panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Deaths",
-       subtitle = sprintf("Total Deaths: %s", as.character(sum(fairfax$dead))),
+       subtitle = sprintf("Total Deaths: %s", sum(fairfax$dead)),
                x=NULL, y=NULL) +
   ylim(0, (max(fairfax$new_dead)+10)) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
 
-d
-
-
-
-
-```
-
-
-
-
-```{r fig.height=10}
-
+#grab the maximum date
 today <- max(fairfax$date)
+
+# arrange the plots vertically
 patchwork <- n / a / h/ d 
 
+#create final plot
 final <- patchwork + 
-  plot_annotation(title="Daily Covid-19 Counts for Fairfax Health District*",
-                  subtitle = sprintf("As of %s %s %s",day(ds), month.abb[month(ds)],year(ds)),
-                  caption = "*Fairfax Health District includes Fairfax County, City of Fairfax, and City of Falls Church\nSource: VA Dept of Health",
+  plot_layout(heights = c(2,1,1,1))+
+  plot_annotation(title=sprintf("Fairfax Health District: Covid-19 Summary for %s %s %s",
+                                day(today), month.name[month(today)],year(today)),
+                  subtitle= "Fairfax Health District includes Fairfax County, City of Fairfax, and City of Falls Church\nSource: Virginia Department of Health",
                   theme = theme(plot.title = element_text(size = 16))) &
   theme(text = element_text(family='Verdana'),
         plot.caption = element_text(face = 'italic')) 
@@ -141,7 +154,7 @@ final
 ```
 
 ```{r}
-ggsave("covid_tom.png",width = 7.5)
+ggsave("covid_daily_ffx.png",width = 8.5, height=11.0)
 ```
 
 
