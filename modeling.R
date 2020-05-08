@@ -14,7 +14,7 @@ va_districts <- va_districts %>% group_by(VDH.Health.District) %>%
 
 fairfax <- va_districts %>% filter(VDH.Health.District == "Fairfax")
 
-data <- list('T'=length(fairfax$Total.Cases), 'Y'=log(fairfax$Total.Cases))
+data <- list('T'=length(fairfax$Total.Cases), 'Y'=log(1 + fairfax$Total.Cases))
 
 model_file <- stan_model('local_lvl_irw.stan')
 
