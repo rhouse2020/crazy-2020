@@ -70,14 +70,22 @@ fairfax
 
 ```
 
+Read in the trend line from the stan model
+
+```{r}
+stan <- read_csv("trends/trend_0508.csv")
+
+```
+
+
 
 Plot everything
 ```{r fig.height=10, warning=FALSE}
 
 # plot new cases
 n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
-  geom_bar(stat="identity",fill="blue", alpha=0.75) +
-  geom_ma(ma_fun = SMA, n = 7, linetype="solid", color = "red", size=1) +
+  geom_bar(stat="identity",fill="grey49", alpha=0.75) +
+  geom_line(data=stan, aes(x=date, y=trend), color="firebrick", size=2, linetype="solid")+
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_cases, label=new_cases),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme_minimal()+
@@ -88,6 +96,8 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
        subtitle = sprintf("Total Cases: %s", max(fairfax$tot_cases)),
            x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
+
+
 
 # plot case streak
 a <- ggplot(fairfax, aes(x=date, y=streak)) + 
