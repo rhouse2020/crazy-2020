@@ -11,17 +11,16 @@ va_data <- va_data %>%
     select(date=`Report Date`, Locality, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths) %>% 
     arrange(date)
 
-# Summing up the health districts
-va_districts <- va_data %>% group_by(date, district) %>% 
-    summarise(tot_cases=sum(cases), 
-              hosp=sum(Hospitalizations), 
-              deaths=sum(Deaths))
+# Using Locality instead of health districts to pull out just a single county
+va_locality <- va_data %>% 
+    select(date, Locality, tot_cases=cases, hosp=Hospitalizations, deaths=Deaths)
 
-va_districts <- va_districts %>% group_by(district) %>%
+va_locality <- va_locality %>% group_by(Locality) %>% 
     mutate(new_cases=tot_cases -lag(tot_cases)) %>% # get the count of daily new cases
     filter(!(is.na(new_cases))) # removing that first date where we don't know the "new" number
+    
 
-fairfax <- va_districts %>% filter(district == "Fairfax")
+fairfax <- va_locality %>% filter(Locality == "Fairfax")
 
 # Data for the model
 data <- list(
@@ -42,7 +41,7 @@ trend <- apply(model_results$Y_sim_exp, 2, mean) - 1
 
 trend <- data.frame('date'=fairfax$date,'trend'=trend)
 
-write.csv(trend, 'trends/trend_0507.csv', row.names = FALSE)
+write.csv(trend, 'trends/trend_today.csv', row.names = FALSE)
 
 ggplot(fairfax, aes(x=date, y=new_cases)) + geom_point() + 
     labs(title='Daily change in # of Covid-19 cases for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
