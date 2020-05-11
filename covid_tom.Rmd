@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
-library(tidyquant)
 library(patchwork)
 library(extrafont)
 
@@ -30,7 +29,8 @@ download.file(url, dest)
 
 
 ```
-read data and select desired fields
+
+read data and select/rename desired fields
 ```{r}
 data <- read_csv("data/va_daily.csv" ,
                 col_types = cols('Report Date' = col_date(format = "%m/%d/%Y"),
@@ -39,7 +39,7 @@ data <- read_csv("data/va_daily.csv" ,
                                  'Deaths' = col_integer()))
                 
 
-data <- data %>% select(date=`Report Date`, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
+data <- data %>% select(date=`Report Date`, Locality, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
 
 data
 ```
@@ -47,24 +47,40 @@ data
 
 Filter for Fairfax Health District then calculate new cases, new hospitalizations, and new deaths.
 
-Add fields to record sign of new cases differences and then add a column to calculate the streak of days with decreasing new cases.
+Add fields to record sign of new cases differences and then add a column to calculate the streak of days with decreasing or
+zero new cases.
 ```{r}
-fairfax <- data %>% filter(district == 'Fairfax') %>% 
-  group_by(date, district) %>%
-  summarize(tot_cases = sum(cases), hosp=sum(Hospitalizations),dead=sum(Deaths)) %>% 
-  arrange(date) %>% 
-  ungroup() %>% 
-  group_by(district) %>%
-  select(date, district, tot_cases, hosp, dead) %>%
-  mutate(new_cases = tot_cases - lag(tot_cases,1),
+
+# Uncomment and use this code if graphing Fairfax Health District 
+# fairfax <- data %>% filter(district == 'Fairfax') %>% 
+#   #group_by(date, district) %>%
+#   #group_by(date) %>% 
+#   summarize(tot_cases = sum(cases), hosp=sum(Hospitalizations),dead=sum(Deaths)) %>% 
+#   arrange(date) %>% 
+#   #ungroup() %>% 
+#   #group_by(district) %>%
+#   select(date, Locality, tot_cases, hosp, dead) %>%
+#   mutate(new_cases = tot_cases - lag(tot_cases,1),
+#          new_hosp = hosp - lag(hosp,1),
+#          new_dead = dead - lag(dead,1)) %>% 
+#   # 1 means 0 or negative difference,  0 means positive difference
+#   mutate(d_cases = if_else(sign(new_cases - lag(new_cases,1)) ==1,0,1,missing=0)) %>%
+#   group_by(grp=cumsum(d_cases==0)) %>% 
+#   mutate(streak = ifelse(d_cases==1, lag(cumsum(d_cases==1))+1,0))
+
+
+#Use this code if graphing Fairfax County (not F.Church or Fairfax City) 
+fairfax <- data %>% filter(Locality == 'Fairfax') %>% 
+  select(date,cases,hosp=Hospitalizations,dead=Deaths ) %>% 
+  arrange(date) %>%
+  mutate(new_cases = cases - lag(cases,1),
          new_hosp = hosp - lag(hosp,1),
-         new_dead = dead - lag(dead,1)) %>% 
-  # 1 means 0 or negative difference,  0 means positive difference
+         new_dead = dead - lag(dead,1)) %>%
+  # 1 means 0 or negative difference,  0 means positive difference, d_cases stands for difference in new cases
   mutate(d_cases = if_else(sign(new_cases - lag(new_cases,1)) ==1,0,1,missing=0)) %>%
-  group_by(grp=cumsum(d_cases==0)) %>% 
+  group_by(grp=cumsum(d_cases==0)) %>%
   mutate(streak = ifelse(d_cases==1, lag(cumsum(d_cases==1))+1,0))
 
-  
 
 fairfax
 
@@ -73,7 +89,7 @@ fairfax
 Read in the trend line from the stan model
 
 ```{r}
-stan <- read_csv("trends/trend_0508.csv")
+stan <- read_csv("trends/trend_today.csv")
 
 ```
 
@@ -93,7 +109,7 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Cases",
-       subtitle = sprintf("Total Cases: %s", max(fairfax$tot_cases)),
+       subtitle = sprintf("Total Cases: %s", max(fairfax$cases)),
            x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
 
@@ -151,11 +167,20 @@ today <- max(fairfax$date)
 patchwork <- n / a / h/ d 
 
 #create final plot
+# final <- patchwork + 
+#   plot_layout(heights = c(2,1,1,1))+
+#   plot_annotation(title=sprintf("Fairfax Health District: Covid-19 Summary for %s %s %s",
+#                                 day(today), month.name[month(today)],year(today)),
+#                   subtitle= "Fairfax Health District includes Fairfax County, City of Fairfax, and City of Falls Church\nSource: Virginia Department of Health",
+#                   theme = theme(plot.title = element_text(size = 16))) &
+#   theme(text = element_text(family='Verdana'),
+#         plot.caption = element_text(face = 'italic')) 
+
 final <- patchwork + 
   plot_layout(heights = c(2,1,1,1))+
-  plot_annotation(title=sprintf("Fairfax Health District: Covid-19 Summary for %s %s %s",
+  plot_annotation(title=sprintf("Fairfax County: Covid-19 Summary for %s %s %s",
                                 day(today), month.name[month(today)],year(today)),
-                  subtitle= "Fairfax Health District includes Fairfax County, City of Fairfax, and City of Falls Church\nSource: Virginia Department of Health",
+                  subtitle= "Charts exclude numbers for City of Fairfax and City of Falls Church\nSource: Virginia Department of Health",
                   theme = theme(plot.title = element_text(size = 16))) &
   theme(text = element_text(family='Verdana'),
         plot.caption = element_text(face = 'italic')) 
