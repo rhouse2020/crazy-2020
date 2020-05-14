@@ -1,11 +1,3 @@
-
-############
-
-# WIP - this still needs to be updated, this is just the shell
-
-############
-
-
 library(tidyverse)
 library(rstan)
 
@@ -33,23 +25,25 @@ fairfax <- va_locality %>% filter(Locality == "Fairfax")
 # Data for the model
 data <- list(
     'T'=length(fairfax$new_cases), # number of cases
+    'S'=7, # days in a week
+    'INTR'=51,
     'Y'=log(1 + fairfax$new_cases)) # log(# cases + 1)
 
 # Compiling the model
-model_file <- stan_model('local_lvl_irw.stan')
+model_file <- stan_model('lcl_lvl_irw_dow.stan')
 
 # Estimating the model
-stan_fit <- sampling(model_file, data, iter = 500, chains = 2,
+stan_fit <- sampling(model_file, data, iter = 800, chains = 2,
                      control=list(max_treedepth=13, adapt_delta=0.98))
 # Extracting the results
 model_results <- extract(stan_fit)
 
 # since we did log(new_cases + 1), subtracting the 1 here
-trend <- apply(model_results$Y_sim_exp, 2, mean) - 1
+trend <- apply(model_results$mu_exp, 2, mean) - 1
 
 trend <- data.frame('date'=fairfax$date,'trend'=trend)
 
-write.csv(trend, 'trends/trend_today.csv', row.names = FALSE)
+write.csv(trend, 'trends/trend_today_dow.csv', row.names = FALSE)
 
 ggplot(fairfax, aes(x=date, y=new_cases)) + geom_point() + 
     labs(title='Daily change in # of Covid-19 cases for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
