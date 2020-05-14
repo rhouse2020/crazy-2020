@@ -1,0 +1,23 @@
+name: covid_dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8.1
+  - pystan=2.19.1.1
+  - numpy
+  - scipy
+  - jupyter
+  - matplotlib
+  - seaborn
+  - graphviz
+  - sqlalchemy
+  - pandas
+  - pandas-datareader
+  - scikit-learn
+  - tslearn
+  - statsmodels
+  - tqdm
+  - pillow
+  - arviz
+  - fastavro
+  - fastparquet
