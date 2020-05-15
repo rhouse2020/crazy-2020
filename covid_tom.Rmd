@@ -22,7 +22,7 @@ get the daily data
 ```{r}
 
 
-url <- "http://www.vdh.virginia.gov/content/uploads/sites/182/2020/03/VDH-COVID-19-PublicUseDataset-Cases.csv"
+url <- "http://www.vdh.virginia.gov/content/uploads/sites/182/2020/05/VDH-COVID-19-PublicUseDataset-Cases.csv"
 dest <- paste(getwd(), "/data/va_daily.csv",sep="")
 
 download.file(url, dest)
@@ -89,7 +89,7 @@ fairfax
 Read in the trend line from the stan model
 
 ```{r}
-stan <- read_csv("trends/trend_today.csv")
+stan <- read_csv("trends/trend_today_dow.csv")
 
 ```
 
