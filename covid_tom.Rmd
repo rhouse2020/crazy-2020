@@ -114,7 +114,8 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
   labs(title="New Covid-19 Cases",
        subtitle = sprintf("Total Cases: %s", max(fairfax$cases)),
            x=NULL, y=NULL) +
-  xlim(date("2020-03-17"), max(fairfax$date)+1)
+  xlim(date("2020-03-17"), max(fairfax$date)+1) +
+  ylim(0, 450)
 
 
 
