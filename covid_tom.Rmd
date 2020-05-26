@@ -13,8 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(patchwork)
 library(extrafont)
+library(lubridate)
 
-
+theme_set(theme_minimal())
 ```
 
 
@@ -107,7 +108,6 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
   geom_line(data=stan, aes(x=date, y=trend), color="firebrick", size=2, linetype="solid")+
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_cases, label=new_cases),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
-  theme_minimal()+
   theme(text = element_text(family='Verdana'),
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
@@ -115,7 +115,7 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
        subtitle = sprintf("Total Cases: %s", max(fairfax$cases)),
            x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1) +
-  ylim(0, 450)
+  ylim(0, 500)
 
 
 
@@ -125,7 +125,6 @@ a <- ggplot(fairfax, aes(x=date, y=streak)) +
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=streak, label=streak),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   ylim(0,15) +
-  theme_minimal()+
   theme(text = element_text(family='Verdana'),
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
@@ -136,9 +135,9 @@ a <- ggplot(fairfax, aes(x=date, y=streak)) +
 # plot hospitalizations
 h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
   geom_bar(stat="identity", fill = "purple", alpha=0.75, na.rm=TRUE) +
+  geom_line(data=stan, aes(x=date, y=trend_hosp), color="purple4", size=1.5, linetype="solid")+
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_hosp, label=new_hosp),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
-  theme_minimal()+
   theme(text = element_text(family='Verdana'),
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
@@ -151,10 +150,10 @@ h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
 
 # plot deaths
 d <- ggplot(fairfax, aes(x=date, y=new_dead)) +
-  geom_bar(stat="identity", fill = "brown",alpha=0.75,  na.rm=TRUE) +
+  geom_bar(stat="identity", fill = "chocolate",alpha=0.75,  na.rm=TRUE) + #was brown
+  geom_line(data=stan, aes(x=date, y=trend_dead), color="chocolate4", size=1.5, linetype="solid")+
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_dead, label=new_dead),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
-  theme_minimal()+
   theme(text = element_text(family='Verdana'),
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
@@ -190,6 +189,8 @@ final <- patchwork +
 
 final
 ```
+
+
 
 ```{r}
 ggsave("covid_daily_ffx.png",width = 8.5, height=11.0)
