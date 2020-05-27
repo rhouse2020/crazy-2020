@@ -18,6 +18,18 @@ library(lubridate)
 theme_set(theme_minimal())
 ```
 
+To add the Verdana font to your R installation, you will need to run the below code from the extrafont package.  
+The code only needs to be done once but extrafont needs to be loaded to access any fonts you have
+added.  
+
+For this project, Verdana for Windows was added.   The Verdana font file name for Windows is VERDANA.TTF.  Linux and Mac probably have slightly different names.
+
+```{r}
+# font_import(pattern="VERDANA.TTF", prompt=FALSE)
+# loadfonts(device = "win")  #pick your os
+```
+
+
 
 get the daily data
 ```{r}
