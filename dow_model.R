@@ -67,7 +67,7 @@ trend_hosp <- apply(model_results_hosp$mu_exp, 2, mean) - 1
 trend_hosp <- data.frame('date'=fairfax$date,'trend_hosp'=trend_hosp)
 
 ggplot(fairfax, aes(x=date, y=new_hosp)) + geom_point() + 
-    labs(title='Daily change in # of Covid-19 cases for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
+    labs(title='Daily change in # of Covid-19 hospitalizations for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
     geom_line(aes(fairfax$date, y=trend_hosp$trend_hosp), color='blue')
 
 # Deaths
@@ -86,7 +86,7 @@ trend_dead <- apply(model_results_dead$mu_exp, 2, mean) - 1
 trend_dead <- data.frame('date'=fairfax$date,'trend_dead'=trend_dead)
 
 ggplot(fairfax, aes(x=date, y=new_dead)) + geom_point() + 
-    labs(title='Daily change in # of Covid-19 cases for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
+    labs(title='Daily change in # of Covid-19 deaths for Fairfax') + xlab('Date') + ylab('Daily Delta') + 
     geom_line(aes(fairfax$date, y=trend_dead$trend_dead), color='blue')
 
 all_trends <- left_join(trend, trend_hosp, by='date')
