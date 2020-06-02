@@ -124,7 +124,7 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Cases",
-       subtitle = sprintf("Total Cases: %s", max(fairfax$cases)),
+       subtitle = sprintf("Total Cases: %s", format(max(fairfax$cases),big.mark=",")),
            x=NULL, y=NULL) +
   xlim(date("2020-03-17"), max(fairfax$date)+1) +
   ylim(0, 500)
@@ -154,7 +154,7 @@ h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Hospitalizations",
-       subtitle = sprintf("Total Hospitalizations: %s", max(fairfax$hosp)),
+       subtitle = sprintf("Total Hospitalizations: %s",max(fairfax$hosp)),
        x=NULL, y=NULL) +
   ylim(0, (max(fairfax$new_hosp)+10)) +
   xlim(date("2020-03-17"), max(fairfax$date)+1)
