@@ -88,14 +88,15 @@ fairfax <- data %>% filter(Locality == 'Fairfax') %>%
   arrange(date) %>%
   mutate(new_cases = cases - lag(cases,1),
          new_hosp = hosp - lag(hosp,1),
-         new_dead = dead - lag(dead,1)) %>%
+         new_dead = dead - lag(dead,1),
+         new_dead = ifelse(new_dead<0, 0, new_dead)) %>%
   # 1 means 0 or negative difference,  0 means positive difference, d_cases stands for difference in new cases
   mutate(d_cases = if_else(sign(new_cases - lag(new_cases,1)) ==1,0,1,missing=0)) %>%
   group_by(grp=cumsum(d_cases==0)) %>%
   mutate(streak = ifelse(d_cases==1, lag(cumsum(d_cases==1))+1,0))
 
 
-fairfax
+fairfax %>% arrange(desc(date))
 
 ```
 
