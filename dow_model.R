@@ -19,6 +19,8 @@ va_locality <- va_locality %>% group_by(Locality) %>%
     filter(!(is.na(new_cases))) # removing that first date where we don't know the "new" number
 
 fairfax <- va_locality %>% filter(Locality == "Fairfax")
+# These next 3 lines are irritating that they are necessary
+fairfax$new_cases[fairfax$new_cases < 0] <- 0 # b/c a couple of them are negative
 fairfax$new_hosp[fairfax$new_hosp < 0] <- 0 # b/c a couple of them are negative
 fairfax$new_dead[fairfax$new_dead < 0] <- 0 # b/c a couple of them are negative
 
