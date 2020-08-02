@@ -35,7 +35,7 @@ get the daily data
 ```{r}
 
 
-url <- "http://www.vdh.virginia.gov/content/uploads/sites/182/2020/05/VDH-COVID-19-PublicUseDataset-Cases.csv"
+url <- "https://data.virginia.gov/api/views/bre9-aqqr/rows.csv?accessType=DOWNLOAD&api_foundry=true"
 dest <- paste(getwd(), "/data/va_daily.csv",sep="")
 
 download.file(url, dest)
@@ -119,8 +119,8 @@ today <- max(fairfax$date)
 n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
   geom_bar(stat="identity",fill="grey49", alpha=0.75) +
   geom_line(data=stan, aes(x=date, y=trend), color="firebrick", size=2, linetype="solid")+
-  geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_cases, label=new_cases),
-            position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
+  geom_text(data=subset(fairfax, date ==max(date)), aes(y=abs(new_cases), label=new_cases),
+            position = position_dodge(width = 0.5), vjust=-1.0, color="grey32") +
   theme(text = element_text(family='Verdana'),
         plot.title = element_text(size = 12, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
