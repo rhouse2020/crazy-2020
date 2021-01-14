@@ -1,15 +1,12 @@
 ---
-title: "jupyter_test"
-output: html_document
+title: "Fairfax County"
+
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ## R Markdown
 
-```{r}
+```{r message=FALSE}
 library(tidyverse)
 library(patchwork)
 library(extrafont)
@@ -54,7 +51,7 @@ data <- read_csv("data/va_daily.csv" ,
 
 data <- data %>% select(date=`Report Date`, Locality, district=`VDH Health District`, cases=`Total Cases`, Hospitalizations, Deaths)
 
-data
+data %>% arrange(desc(date))
 ```
 
 
@@ -109,7 +106,7 @@ stan <- read_csv("trends/trend_today_dow.csv")
 
 
 
-Plot everything
+#Plot everything
 ```{r fig.height=10, warning=FALSE}
 
 #grab the maximum date
@@ -120,15 +117,15 @@ n <- ggplot(fairfax, aes(x=date, y=new_cases)) +
   geom_bar(stat="identity",fill="grey49", alpha=0.75) +
   geom_line(data=stan, aes(x=date, y=trend), color="firebrick", size=2, linetype="solid")+
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=abs(new_cases), label=new_cases),
-            position = position_dodge(width = 0.5), vjust=-1.0, color="grey32") +
+             position = position_dodge(width = 0.5), vjust=0, hjust=-0.25,color="grey32") +
   theme(text = element_text(family='Verdana'),
-        plot.title = element_text(size = 12, face="bold"),
+        plot.title = element_text(size = 14, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Cases",
        subtitle = sprintf("Total Cases: %s", format(max(fairfax$cases),big.mark=",")),
            x=NULL, y=NULL) +
-  xlim(date("2020-03-17"), max(fairfax$date)+1) +
-  ylim(0, 500)
+  xlim(date("2020-03-17"), max(fairfax$date)+1) #+
+# ylim(0, 000)
 
 
 
@@ -139,7 +136,7 @@ a <- ggplot(fairfax, aes(x=date, y=streak)) +
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   ylim(0,15) +
   theme(text = element_text(family='Verdana'),
-        plot.title = element_text(size = 12, face="bold"),
+        plot.title = element_text(size = 14, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="Consecutive Days with Fewer New Covid-19 Cases",
        x=NULL, y=NULL) +
@@ -152,7 +149,7 @@ h <-  ggplot(fairfax, aes(x=date, y=new_hosp)) +
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_hosp, label=new_hosp),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme(text = element_text(family='Verdana'),
-        plot.title = element_text(size = 12, face="bold"),
+        plot.title = element_text(size = 14, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Hospitalizations",
        subtitle = sprintf("Total Hospitalizations: %s",max(fairfax$hosp)),
@@ -168,7 +165,7 @@ d <- ggplot(fairfax, aes(x=date, y=new_dead)) +
   geom_text(data=subset(fairfax, date ==max(date)), aes(y=new_dead, label=new_dead),
             position = position_dodge(width = 0.5), vjust=-.5, color="grey32") +
   theme(text = element_text(family='Verdana'),
-        plot.title = element_text(size = 12, face="bold"),
+        plot.title = element_text(size = 14, face="bold"),
         panel.grid.major = element_line(color="grey68")) +
   labs(title="New Covid-19 Deaths",
        subtitle = sprintf("Total Deaths: %s", fairfax$dead[fairfax$date==today]),
@@ -196,8 +193,8 @@ final <- patchwork +
   plot_annotation(title=sprintf("Fairfax County: Covid-19 Summary for %s %s %s",
                                 day(today), month.name[month(today)],year(today)),
                   subtitle= "Charts exclude numbers for City of Fairfax and City of Falls Church\nSource: Virginia Department of Health",
-                  theme = theme(plot.title = element_text(size = 16))) &
-  theme(text = element_text(family='Verdana'),
+                  theme = theme(plot.title = element_text(size = 18, face="bold"))) &
+  theme(text = element_text(family='Roboto Condensed'),
         plot.caption = element_text(face = 'italic')) 
 
 final
